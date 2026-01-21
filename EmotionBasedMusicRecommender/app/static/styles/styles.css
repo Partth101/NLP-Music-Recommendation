@@ -1,0 +1,106 @@
+/* styles.css */
+
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    margin-top: 50px;
+    background-image: url('../images/backgroundimage.png');
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+}
+
+h1 {
+    font-family: 'Dancing Script', cursive;
+    font-size: 48px;
+}
+
+textarea#emotion-input {
+    width: 70%;
+    height: 100px;
+    border-radius: 5px;
+    padding: 10px;
+    font-size: 16px;
+    margin-bottom: 10px;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+button {
+    border-radius: 5px;
+    padding: 5px 10px;
+    cursor: pointer;
+}
+
+#recommendation-message {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 32px;
+    color: #996515; 
+    opacity: 0;
+    transition: opacity 1s ease; 
+    display: none;
+    margin-top: 40px;
+    margin-bottom: 20px;
+}
+
+#spotify-iframe {
+    width: 60%;
+    margin: 20px auto;
+    display: none;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 12px;
+    padding: 0px;
+    opacity: 0;
+    transition: opacity 1s ease; 
+}
+
+.submit-button {
+    background-color: #f8e6d1; 
+    border: 2px solid black; 
+    color: black; 
+    padding: 15px 32px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin: 4px 2px;
+    cursor: pointer;
+    border-radius: 12px;
+    box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.2); 
+    transition: transform 0.1s; 
+}
+
+.submit-button:hover {
+    background-color: #e6d4c3; 
+}
+
+.submit-button:active {
+    transform: translateY(4px); 
+}
+
+.empty-input::placeholder {
+    color: red;
+}
+
+#recommendation-message {
+    padding: 10px; /* Adjust the padding to your preference */
+    background-color: #f5f5dc; /* Light beige background */
+    color: #333; /* Dark gray text color */
+    margin-right: 520px; /* Adjust the right margin for positioning */
+    margin-left: 520px; /* Adjust the left margin for positioning */
+    text-align: center; /* Center-align the text */
+    font-size: 24px; /* Adjust the font size */
+    font-weight: bold; /* Make the text bold */
+    text-transform: uppercase; /* Uppercase text */
+    letter-spacing: 2px; /* Increase letter spacing */
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); /* Add a subtle text shadow */
+}
+
+#prompt {
+    font-family: 'Montserrat', sans-serif;
+    color: black;
+    font-size: 18px;
+    text-align: center;
+    margin-top: 10px; /* Adjust the margin as needed */
+}

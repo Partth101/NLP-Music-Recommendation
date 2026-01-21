@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emotion-based Music Recommender</title>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Montserrat:wght@500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/styles.css') }}">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+
+</head>
+<body>
+    <h1>Emotion-based Music Recommender</h1>
+    <div id="prompt">How are you feeling today?</div>
+    <textarea id="emotion-input" placeholder="How are you feeling today?"></textarea>
+    <button class="submit-button" onclick="displaySpotifyTrack()">Submit</button>
+    <div id="recommendation-message">We feel you may like...</div>
+    <div id="spotify-iframe">
+        <!-- Spotify track will be displayed here -->
+    </div>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
