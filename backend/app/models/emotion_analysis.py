@@ -2,7 +2,8 @@
 
 import uuid
 from datetime import datetime
-from sqlalchemy import Column, String, Text, Integer, DateTime, JSON, Float, ForeignKey
+
+from sqlalchemy import JSON, Column, DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
@@ -15,7 +16,12 @@ class EmotionAnalysis(Base):
     __tablename__ = "emotion_analyses"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+    user_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
 
     # Input
     input_text = Column(Text, nullable=False)
@@ -41,7 +47,11 @@ class EmotionAnalysis(Base):
 
     # Relationships
     user = relationship("User", back_populates="emotion_analyses")
-    recommendation = relationship("Recommendation", back_populates="analysis", uselist=False)
+    recommendation = relationship(
+        "Recommendation", back_populates="analysis", uselist=False
+    )
 
     def __repr__(self):
-        return f"<EmotionAnalysis {self.primary_emotion} ({self.primary_confidence:.2f})>"
+        return (
+            f"<EmotionAnalysis {self.primary_emotion} ({self.primary_confidence:.2f})>"
+        )

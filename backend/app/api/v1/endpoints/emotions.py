@@ -1,24 +1,25 @@
 """Emotion analysis endpoints."""
 
-import time
 import logging
+import time
 from typing import Optional
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
+from app.config import settings
+from app.core.security import get_current_user_optional
 from app.db.base import get_db
-from app.models.user import User
+from app.ml.model_manager import ModelManager
 from app.models.emotion_analysis import EmotionAnalysis
+from app.models.user import User
 from app.schemas.emotion import (
     EmotionAnalysisRequest,
     EmotionAnalysisResponse,
-    SupportedEmotionsResponse,
     EmotionBatchRequest,
-    EmotionBatchResponse
+    EmotionBatchResponse,
+    SupportedEmotionsResponse,
 )
-from app.core.security import get_current_user_optional
-from app.ml.model_manager import ModelManager
-from app.config import settings
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -28,7 +29,7 @@ logger = logging.getLogger(__name__)
 async def analyze_emotions(
     request: EmotionAnalysisRequest,
     current_user: Optional[User] = Depends(get_current_user_optional),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
     Analyze text for emotions using BERT-based multi-label classification.
@@ -49,7 +50,7 @@ async def analyze_emotions(
         if not model_manager.is_loaded():
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="ML model not loaded. Please try again later."
+                detail="ML model not loaded. Please try again later.",
             )
 
         # Perform prediction
@@ -65,7 +66,7 @@ async def analyze_emotions(
                 prediction["primary_emotion"],
                 prediction["primary_confidence"],
                 prediction["secondary_emotions"],
-                prediction["confidence_level"]
+                prediction["confidence_level"],
             )
             # TODO: Add SHAP word importance when explainer is implemented
             # word_importance = explainer.get_word_importance(request.text)
@@ -85,7 +86,7 @@ async def analyze_emotions(
                 explanation=explanation,
                 word_importance=word_importance,
                 model_version=settings.model_version,
-                processing_time_ms=processing_time_ms
+                processing_time_ms=processing_time_ms,
             )
             db.add(analysis)
             db.commit()
@@ -104,7 +105,7 @@ async def analyze_emotions(
             explanation=explanation,
             word_importance=word_importance,
             processing_time_ms=processing_time_ms,
-            model_version=settings.model_version
+            model_version=settings.model_version,
         )
 
     except HTTPException:
@@ -113,7 +114,7 @@ async def analyze_emotions(
         logger.error(f"Error analyzing emotions: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Error processing emotion analysis"
+            detail="Error processing emotion analysis",
         )
 
 
@@ -121,7 +122,7 @@ async def analyze_emotions(
 async def analyze_emotions_batch(
     request: EmotionBatchRequest,
     current_user: Optional[User] = Depends(get_current_user_optional),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Analyze multiple texts for emotions in batch."""
     start_time = time.time()
@@ -130,7 +131,7 @@ async def analyze_emotions_batch(
     if not model_manager.is_loaded():
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="ML model not loaded"
+            detail="ML model not loaded",
         )
 
     results = []
@@ -143,27 +144,26 @@ async def analyze_emotions_batch(
                 prediction["primary_emotion"],
                 prediction["primary_confidence"],
                 prediction["secondary_emotions"],
-                prediction["confidence_level"]
+                prediction["confidence_level"],
             )
 
-        results.append(EmotionAnalysisResponse(
-            emotions=prediction["emotions"],
-            primary_emotion=prediction["primary_emotion"],
-            primary_confidence=prediction["primary_confidence"],
-            secondary_emotions=prediction["secondary_emotions"],
-            detected_emotions=prediction["detected_emotions"],
-            confidence_level=prediction["confidence_level"],
-            emotional_complexity=prediction["emotional_complexity"],
-            explanation=explanation,
-            model_version=settings.model_version
-        ))
+        results.append(
+            EmotionAnalysisResponse(
+                emotions=prediction["emotions"],
+                primary_emotion=prediction["primary_emotion"],
+                primary_confidence=prediction["primary_confidence"],
+                secondary_emotions=prediction["secondary_emotions"],
+                detected_emotions=prediction["detected_emotions"],
+                confidence_level=prediction["confidence_level"],
+                emotional_complexity=prediction["emotional_complexity"],
+                explanation=explanation,
+                model_version=settings.model_version,
+            )
+        )
 
     total_time = int((time.time() - start_time) * 1000)
 
-    return EmotionBatchResponse(
-        results=results,
-        total_processing_time_ms=total_time
-    )
+    return EmotionBatchResponse(results=results, total_processing_time_ms=total_time)
 
 
 @router.get("/supported", response_model=SupportedEmotionsResponse)
@@ -175,7 +175,7 @@ async def get_supported_emotions():
     return SupportedEmotionsResponse(
         emotions=emotions,
         total=len(emotions),
-        description="MoodTune AI detects 17 nuanced emotions from text using BERT-based multi-label classification"
+        description="MoodTune AI detects 17 nuanced emotions from text using BERT-based multi-label classification",
     )
 
 
@@ -183,7 +183,7 @@ def _generate_explanation(
     primary_emotion: str,
     confidence: float,
     secondary_emotions: list[str],
-    confidence_level: str
+    confidence_level: str,
 ) -> str:
     """Generate a natural language explanation of the emotion analysis."""
     confidence_percent = int(confidence * 100)

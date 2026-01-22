@@ -3,11 +3,13 @@
 from datetime import datetime
 from typing import Optional
 from uuid import UUID
+
 from pydantic import BaseModel, Field
 
 
 class SongBase(BaseModel):
     """Base song schema."""
+
     name: str
     artists: str
     spotify_track_id: str
@@ -15,6 +17,7 @@ class SongBase(BaseModel):
 
 class SongResponse(BaseModel):
     """Schema for song response."""
+
     id: UUID
     spotify_track_id: str
     name: str
@@ -32,6 +35,7 @@ class SongResponse(BaseModel):
 
 class SongList(BaseModel):
     """Schema for paginated song list."""
+
     songs: list[SongResponse]
     total: int
     page: int
@@ -41,6 +45,7 @@ class SongList(BaseModel):
 
 class SongsByEmotionResponse(BaseModel):
     """Schema for songs filtered by emotion."""
+
     emotion: str
     songs: list[SongResponse]
     total: int
@@ -48,6 +53,7 @@ class SongsByEmotionResponse(BaseModel):
 
 class SongStatsResponse(BaseModel):
     """Schema for song database statistics."""
+
     total_songs: int
     total_plays: int
     emotions_covered: list[str]

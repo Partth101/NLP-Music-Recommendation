@@ -5,11 +5,12 @@ This fixes the original issue where the model was loaded on every request.
 Now the model is loaded once at startup and reused for all predictions.
 """
 
-import os
 import logging
+import os
 from typing import Optional
+
 import torch
-from transformers import BertTokenizer, BertForSequenceClassification
+from transformers import BertForSequenceClassification, BertTokenizer
 
 from app.config import settings
 
@@ -32,10 +33,23 @@ class ModelManager:
 
     # Emotion labels (17 emotions)
     EMOTIONS = [
-        "Happiness", "Contentment", "Confidence", "Neutral", "Sadness",
-        "Anger", "Fear", "Surprise", "Disgust", "Love",
-        "Excitement", "Anticipation", "Nostalgia", "Confusion",
-        "Frustration", "Longing", "Optimism"
+        "Happiness",
+        "Contentment",
+        "Confidence",
+        "Neutral",
+        "Sadness",
+        "Anger",
+        "Fear",
+        "Surprise",
+        "Disgust",
+        "Love",
+        "Excitement",
+        "Anticipation",
+        "Nostalgia",
+        "Confusion",
+        "Frustration",
+        "Longing",
+        "Optimism",
     ]
 
     def __new__(cls):
@@ -59,11 +73,15 @@ class ModelManager:
             model_path = settings.model_path
             if not os.path.isabs(model_path):
                 # Try relative to backend directory
-                base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+                base_dir = os.path.dirname(
+                    os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                )
                 model_path = os.path.join(base_dir, model_path)
 
             # Check if model exists, if not use pre-trained BERT
-            if os.path.exists(model_path) and os.path.exists(os.path.join(model_path, "config.json")):
+            if os.path.exists(model_path) and os.path.exists(
+                os.path.join(model_path, "config.json")
+            ):
                 logger.info(f"Loading fine-tuned model from {model_path}")
                 self._tokenizer = BertTokenizer.from_pretrained(model_path)
                 self._model = BertForSequenceClassification.from_pretrained(model_path)
@@ -74,7 +92,7 @@ class ModelManager:
                 self._model = BertForSequenceClassification.from_pretrained(
                     "bert-base-uncased",
                     num_labels=len(self.EMOTIONS),
-                    problem_type="multi_label_classification"
+                    problem_type="multi_label_classification",
                 )
 
             # Set device
@@ -122,7 +140,7 @@ class ModelManager:
             padding="max_length",
             truncation=True,
             return_attention_mask=True,
-            return_tensors="pt"
+            return_tensors="pt",
         )
 
         input_ids = inputs["input_ids"].to(self._device)
@@ -138,25 +156,24 @@ class ModelManager:
 
         # Build emotion scores dictionary
         emotion_scores = {
-            emotion: float(score)
-            for emotion, score in zip(self.EMOTIONS, scores)
+            emotion: float(score) for emotion, score in zip(self.EMOTIONS, scores)
         }
 
         # Sort by confidence
-        sorted_emotions = sorted(emotion_scores.items(), key=lambda x: x[1], reverse=True)
+        sorted_emotions = sorted(
+            emotion_scores.items(), key=lambda x: x[1], reverse=True
+        )
 
         # Determine primary and secondary emotions
         primary_emotion = sorted_emotions[0][0]
         primary_confidence = sorted_emotions[0][1]
 
         detected_emotions = [
-            emotion for emotion, score in emotion_scores.items()
-            if score >= threshold
+            emotion for emotion, score in emotion_scores.items() if score >= threshold
         ]
 
         secondary_emotions = [
-            emotion for emotion in detected_emotions
-            if emotion != primary_emotion
+            emotion for emotion in detected_emotions if emotion != primary_emotion
         ]
 
         # Determine confidence level
@@ -169,6 +186,7 @@ class ModelManager:
 
         # Calculate emotional complexity (entropy-based)
         import numpy as np
+
         scores_array = np.array(scores)
         scores_normalized = scores_array / (scores_array.sum() + 1e-10)
         entropy = -np.sum(scores_normalized * np.log(scores_normalized + 1e-10))
@@ -183,7 +201,7 @@ class ModelManager:
             "detected_emotions": detected_emotions,
             "confidence_level": confidence_level,
             "emotional_complexity": emotional_complexity,
-            "raw_scores": scores.tolist()
+            "raw_scores": scores.tolist(),
         }
 
     def get_emotions_list(self) -> list[str]:

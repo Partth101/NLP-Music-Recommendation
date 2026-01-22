@@ -1,11 +1,12 @@
 """Database initialization and CSV data migration."""
 
-import os
 import logging
+import os
+
 import pandas as pd
 from sqlalchemy.orm import Session
 
-from app.db.base import Base, engine, SessionLocal
+from app.db.base import Base, SessionLocal, engine
 from app.models.song import Song
 
 logger = logging.getLogger(__name__)
@@ -38,18 +39,33 @@ def migrate_songs_from_csv(csv_path: str, db: Session) -> int:
 
         # Expected emotion columns
         emotion_columns = [
-            "Happiness", "Contentment", "Confidence", "Neutral", "Sadness",
-            "Anger", "Fear", "Surprise", "Disgust", "Love",
-            "Excitement", "Anticipation", "Nostalgia", "Confusion",
-            "Frustration", "Longing", "Optimism"
+            "Happiness",
+            "Contentment",
+            "Confidence",
+            "Neutral",
+            "Sadness",
+            "Anger",
+            "Fear",
+            "Surprise",
+            "Disgust",
+            "Love",
+            "Excitement",
+            "Anticipation",
+            "Nostalgia",
+            "Confusion",
+            "Frustration",
+            "Longing",
+            "Optimism",
         ]
 
         migrated = 0
         for _, row in df.iterrows():
             # Check if song already exists
-            existing = db.query(Song).filter(
-                Song.spotify_track_id == str(row.get("Track_ID", ""))
-            ).first()
+            existing = (
+                db.query(Song)
+                .filter(Song.spotify_track_id == str(row.get("Track_ID", "")))
+                .first()
+            )
 
             if existing:
                 continue
@@ -70,10 +86,18 @@ def migrate_songs_from_csv(csv_path: str, db: Session) -> int:
                 spotify_track_id=str(row.get("Track_ID", "")),
                 name=str(row.get("Song Name", "Unknown")),
                 artists=str(row.get("Artists", "Unknown")),
-                artist_id=str(row.get("Artist_ID", "")) if pd.notna(row.get("Artist_ID")) else None,
+                artist_id=(
+                    str(row.get("Artist_ID", ""))
+                    if pd.notna(row.get("Artist_ID"))
+                    else None
+                ),
                 emotions=emotions,
                 emotion_scores=emotion_scores,
-                times_played=int(row.get("Times_played", 0)) if pd.notna(row.get("Times_played")) else 0
+                times_played=(
+                    int(row.get("Times_played", 0))
+                    if pd.notna(row.get("Times_played"))
+                    else 0
+                ),
             )
 
             db.add(song)
@@ -100,8 +124,8 @@ def init_database():
         # Find CSV file
         possible_paths = [
             "/app/data/processed_songs.csv",  # Docker container path
-            "./data/processed_songs.csv",     # Local backend/data path
-            "../data/processed_songs.csv",    # Relative path
+            "./data/processed_songs.csv",  # Local backend/data path
+            "../data/processed_songs.csv",  # Relative path
         ]
 
         csv_path = None

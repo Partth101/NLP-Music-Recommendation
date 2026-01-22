@@ -2,7 +2,8 @@
 
 import uuid
 from datetime import datetime
-from sqlalchemy import Column, String, DateTime, JSON, Boolean
+
+from sqlalchemy import JSON, Boolean, Column, DateTime, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
@@ -31,8 +32,12 @@ class User(Base):
     last_login = Column(DateTime, nullable=True)
 
     # Relationships
-    emotion_analyses = relationship("EmotionAnalysis", back_populates="user", cascade="all, delete-orphan")
-    recommendations = relationship("Recommendation", back_populates="user", cascade="all, delete-orphan")
+    emotion_analyses = relationship(
+        "EmotionAnalysis", back_populates="user", cascade="all, delete-orphan"
+    )
+    recommendations = relationship(
+        "Recommendation", back_populates="user", cascade="all, delete-orphan"
+    )
 
     def __repr__(self):
         return f"<User {self.email}>"

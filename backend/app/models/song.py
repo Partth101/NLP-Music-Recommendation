@@ -2,7 +2,8 @@
 
 import uuid
 from datetime import datetime
-from sqlalchemy import Column, String, Integer, DateTime, JSON, ARRAY, Float
+
+from sqlalchemy import ARRAY, JSON, Column, DateTime, Float, Integer, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
@@ -50,8 +51,7 @@ class Song(Base):
             return self.emotions
         # Fall back to emotion_scores keys with score > 0.5
         return [
-            emotion for emotion, score in self.emotion_scores.items()
-            if score > 0.5
+            emotion for emotion, score in self.emotion_scores.items() if score > 0.5
         ]
 
     def increment_play_count(self):

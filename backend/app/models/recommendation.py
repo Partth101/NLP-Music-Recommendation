@@ -2,7 +2,8 @@
 
 import uuid
 from datetime import datetime
-from sqlalchemy import Column, Text, Integer, DateTime, JSON, Float, ForeignKey
+
+from sqlalchemy import JSON, Column, DateTime, Float, ForeignKey, Integer, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
@@ -15,8 +16,17 @@ class Recommendation(Base):
     __tablename__ = "recommendations"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
-    analysis_id = Column(UUID(as_uuid=True), ForeignKey("emotion_analyses.id", ondelete="SET NULL"), nullable=True)
+    user_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    analysis_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("emotion_analyses.id", ondelete="SET NULL"),
+        nullable=True,
+    )
     song_id = Column(UUID(as_uuid=True), ForeignKey("songs.id"), nullable=False)
 
     # Match details

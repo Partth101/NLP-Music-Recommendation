@@ -2,14 +2,20 @@
 
 import random
 from typing import Optional
+
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy.orm import Session
 from sqlalchemy import func
+from sqlalchemy.orm import Session
 
 from app.db.base import get_db
-from app.models.song import Song
-from app.schemas.song import SongResponse, SongList, SongsByEmotionResponse, SongStatsResponse
 from app.ml.model_manager import ModelManager
+from app.models.song import Song
+from app.schemas.song import (
+    SongList,
+    SongResponse,
+    SongsByEmotionResponse,
+    SongStatsResponse,
+)
 
 router = APIRouter()
 
@@ -19,7 +25,7 @@ async def list_songs(
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
     emotion: Optional[str] = Query(None, description="Filter by emotion"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """List all songs with pagination and optional emotion filter."""
     offset = (page - 1) * per_page
@@ -31,7 +37,9 @@ async def list_songs(
         query = query.filter(Song.emotions.contains([emotion]))
 
     total = query.count()
-    songs = query.order_by(Song.times_played.desc()).offset(offset).limit(per_page).all()
+    songs = (
+        query.order_by(Song.times_played.desc()).offset(offset).limit(per_page).all()
+    )
 
     total_pages = (total + per_page - 1) // per_page
 
@@ -40,7 +48,7 @@ async def list_songs(
         total=total,
         page=page,
         per_page=per_page,
-        total_pages=total_pages
+        total_pages=total_pages,
     )
 
 
@@ -51,8 +59,7 @@ async def get_random_song(db: Session = Depends(get_db)):
 
     if count == 0:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="No songs in database"
+            status_code=status.HTTP_404_NOT_FOUND, detail="No songs in database"
         )
 
     # Random offset
@@ -86,15 +93,13 @@ async def get_song_stats(db: Session = Depends(get_db)):
         total_plays=total_plays,
         emotions_covered=emotions_list,
         most_played_songs=[SongResponse.model_validate(s) for s in most_played],
-        emotion_distribution=emotion_distribution
+        emotion_distribution=emotion_distribution,
     )
 
 
 @router.get("/by-emotion/{emotion}", response_model=SongsByEmotionResponse)
 async def get_songs_by_emotion(
-    emotion: str,
-    limit: int = Query(10, ge=1, le=50),
-    db: Session = Depends(get_db)
+    emotion: str, limit: int = Query(10, ge=1, le=50), db: Session = Depends(get_db)
 ):
     """Get songs associated with a specific emotion."""
     # Validate emotion
@@ -104,17 +109,21 @@ async def get_songs_by_emotion(
     if emotion not in valid_emotions:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid emotion. Valid emotions: {', '.join(valid_emotions)}"
+            detail=f"Invalid emotion. Valid emotions: {', '.join(valid_emotions)}",
         )
 
-    songs = db.query(Song).filter(
-        Song.emotions.contains([emotion])
-    ).order_by(Song.times_played.desc()).limit(limit).all()
+    songs = (
+        db.query(Song)
+        .filter(Song.emotions.contains([emotion]))
+        .order_by(Song.times_played.desc())
+        .limit(limit)
+        .all()
+    )
 
     return SongsByEmotionResponse(
         emotion=emotion,
         songs=[SongResponse.model_validate(s) for s in songs],
-        total=len(songs)
+        total=len(songs),
     )
 
 
@@ -129,8 +138,7 @@ async def get_song(song_id: str, db: Session = Depends(get_db)):
 
     if not song:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Song not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Song not found"
         )
 
     return SongResponse.model_validate(song)

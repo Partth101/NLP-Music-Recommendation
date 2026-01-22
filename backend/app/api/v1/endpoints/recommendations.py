@@ -1,30 +1,31 @@
 """Recommendation endpoints."""
 
-import time
 import logging
+import time
 from typing import Optional
 from uuid import UUID
-from fastapi import APIRouter, Depends, HTTPException, status, Query
-from sqlalchemy.orm import Session
-from sqlalchemy import func
 
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import func
+from sqlalchemy.orm import Session
+
+from app.config import settings
+from app.core.security import get_current_user_optional, get_current_user_required
 from app.db.base import get_db
-from app.models.user import User
-from app.models.song import Song
+from app.ml.model_manager import ModelManager
 from app.models.emotion_analysis import EmotionAnalysis
 from app.models.recommendation import Recommendation
+from app.models.song import Song
+from app.models.user import User
+from app.schemas.emotion import EmotionAnalysisResponse
 from app.schemas.recommendation import (
+    RecommendationFeedback,
+    RecommendationHistoryItem,
+    RecommendationHistoryResponse,
     RecommendationRequest,
     RecommendationResponse,
-    RecommendationFeedback,
-    RecommendationHistoryResponse,
-    RecommendationHistoryItem
 )
 from app.schemas.song import SongResponse
-from app.schemas.emotion import EmotionAnalysisResponse
-from app.core.security import get_current_user_optional, get_current_user_required
-from app.ml.model_manager import ModelManager
-from app.config import settings
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -34,7 +35,7 @@ logger = logging.getLogger(__name__)
 async def get_recommendation(
     request: RecommendationRequest,
     current_user: Optional[User] = Depends(get_current_user_optional),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
     Get a music recommendation based on emotional analysis of text.
@@ -53,7 +54,7 @@ async def get_recommendation(
         if not model_manager.is_loaded():
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="ML model not loaded"
+                detail="ML model not loaded",
             )
 
         # Perform emotion analysis
@@ -68,7 +69,7 @@ async def get_recommendation(
         if not song:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="No matching songs found in database"
+                detail="No matching songs found in database",
             )
 
         # Generate explanation
@@ -92,7 +93,7 @@ async def get_recommendation(
                 confidence_level=prediction["confidence_level"],
                 emotional_complexity=prediction["emotional_complexity"],
                 model_version=settings.model_version,
-                processing_time_ms=processing_time_ms
+                processing_time_ms=processing_time_ms,
             )
             db.add(analysis)
             db.flush()
@@ -105,7 +106,7 @@ async def get_recommendation(
             match_score=match_score,
             matched_emotions=matched_emotions,
             explanation=explanation,
-            why_this_song=why_this_song
+            why_this_song=why_this_song,
         )
         db.add(recommendation)
 
@@ -128,7 +129,7 @@ async def get_recommendation(
                 detected_emotions=prediction["detected_emotions"],
                 confidence_level=prediction["confidence_level"],
                 emotional_complexity=prediction["emotional_complexity"],
-                processing_time_ms=processing_time_ms
+                processing_time_ms=processing_time_ms,
             )
 
         return RecommendationResponse(
@@ -139,7 +140,7 @@ async def get_recommendation(
             explanation=explanation,
             why_this_song=why_this_song,
             emotion_analysis=emotion_response,
-            created_at=recommendation.created_at
+            created_at=recommendation.created_at,
         )
 
     except HTTPException:
@@ -148,7 +149,7 @@ async def get_recommendation(
         logger.error(f"Error getting recommendation: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Error processing recommendation"
+            detail="Error processing recommendation",
         )
 
 
@@ -156,18 +157,21 @@ async def get_recommendation(
 async def get_recommendation_by_id(
     recommendation_id: UUID,
     current_user: User = Depends(get_current_user_required),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Get a specific recommendation by ID."""
-    recommendation = db.query(Recommendation).filter(
-        Recommendation.id == recommendation_id,
-        Recommendation.user_id == current_user.id
-    ).first()
+    recommendation = (
+        db.query(Recommendation)
+        .filter(
+            Recommendation.id == recommendation_id,
+            Recommendation.user_id == current_user.id,
+        )
+        .first()
+    )
 
     if not recommendation:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Recommendation not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Recommendation not found"
         )
 
     return RecommendationResponse(
@@ -177,7 +181,7 @@ async def get_recommendation_by_id(
         matched_emotions=recommendation.matched_emotions or [],
         explanation=recommendation.explanation,
         why_this_song=recommendation.why_this_song,
-        created_at=recommendation.created_at
+        created_at=recommendation.created_at,
     )
 
 
@@ -186,18 +190,21 @@ async def submit_feedback(
     recommendation_id: UUID,
     feedback: RecommendationFeedback,
     current_user: User = Depends(get_current_user_required),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Submit feedback for a recommendation."""
-    recommendation = db.query(Recommendation).filter(
-        Recommendation.id == recommendation_id,
-        Recommendation.user_id == current_user.id
-    ).first()
+    recommendation = (
+        db.query(Recommendation)
+        .filter(
+            Recommendation.id == recommendation_id,
+            Recommendation.user_id == current_user.id,
+        )
+        .first()
+    )
 
     if not recommendation:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Recommendation not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Recommendation not found"
         )
 
     # Update feedback
@@ -209,10 +216,14 @@ async def submit_feedback(
 
     # Update song average rating
     song = recommendation.song
-    all_ratings = db.query(func.avg(Recommendation.feedback_rating)).filter(
-        Recommendation.song_id == song.id,
-        Recommendation.feedback_rating.isnot(None)
-    ).scalar()
+    all_ratings = (
+        db.query(func.avg(Recommendation.feedback_rating))
+        .filter(
+            Recommendation.song_id == song.id,
+            Recommendation.feedback_rating.isnot(None),
+        )
+        .scalar()
+    )
     song.average_rating = float(all_ratings) if all_ratings else None
 
     db.commit()
@@ -225,18 +236,25 @@ async def get_history(
     page: int = Query(1, ge=1),
     per_page: int = Query(10, ge=1, le=50),
     current_user: User = Depends(get_current_user_required),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Get user's recommendation history."""
     offset = (page - 1) * per_page
 
-    total = db.query(Recommendation).filter(
-        Recommendation.user_id == current_user.id
-    ).count()
+    total = (
+        db.query(Recommendation)
+        .filter(Recommendation.user_id == current_user.id)
+        .count()
+    )
 
-    recommendations = db.query(Recommendation).filter(
-        Recommendation.user_id == current_user.id
-    ).order_by(Recommendation.created_at.desc()).offset(offset).limit(per_page).all()
+    recommendations = (
+        db.query(Recommendation)
+        .filter(Recommendation.user_id == current_user.id)
+        .order_by(Recommendation.created_at.desc())
+        .offset(offset)
+        .limit(per_page)
+        .all()
+    )
 
     items = [
         RecommendationHistoryItem(
@@ -245,23 +263,18 @@ async def get_history(
             match_score=r.match_score,
             primary_emotion=r.analysis.primary_emotion if r.analysis else "Unknown",
             feedback_rating=r.feedback_rating,
-            created_at=r.created_at
+            created_at=r.created_at,
         )
         for r in recommendations
     ]
 
     return RecommendationHistoryResponse(
-        recommendations=items,
-        total=total,
-        page=page,
-        per_page=per_page
+        recommendations=items, total=total, page=page, per_page=per_page
     )
 
 
 def _find_best_matching_song(
-    db: Session,
-    detected_emotions: list[str],
-    emotion_scores: dict[str, float]
+    db: Session, detected_emotions: list[str], emotion_scores: dict[str, float]
 ) -> tuple[Optional[Song], float, list[str]]:
     """Find the best matching song based on detected emotions."""
     songs = db.query(Song).all()
@@ -289,7 +302,10 @@ def _find_best_matching_song(
         is_same_score_less_played = (
             match_count == len(best_matched_emotions)
             and weighted_score == best_score
-            and (best_song is None or (song.times_played or 0) < (best_song.times_played or 0))
+            and (
+                best_song is None
+                or (song.times_played or 0) < (best_song.times_played or 0)
+            )
         )
         if is_better_match or is_same_count_higher_score or is_same_score_less_played:
             best_song = song
@@ -306,10 +322,7 @@ def _find_best_matching_song(
 
 
 def _generate_recommendation_explanation(
-    song: Song,
-    primary_emotion: str,
-    matched_emotions: list[str],
-    match_score: float
+    song: Song, primary_emotion: str, matched_emotions: list[str], match_score: float
 ) -> tuple[str, list[str]]:
     """Generate explanation for why this song was recommended."""
     score_percent = int(match_score * 100)
@@ -336,10 +349,14 @@ def _generate_recommendation_explanation(
         why_this_song.append(f"Matches your {primary_emotion} mood")
 
     if len(matched_emotions) > 1:
-        why_this_song.append(f"Covers {len(matched_emotions)} of your detected emotions")
+        why_this_song.append(
+            f"Covers {len(matched_emotions)} of your detected emotions"
+        )
 
     if song.average_rating and song.average_rating >= 4.0:
-        why_this_song.append(f"Highly rated by other users ({song.average_rating:.1f}/5)")
+        why_this_song.append(
+            f"Highly rated by other users ({song.average_rating:.1f}/5)"
+        )
 
     if song.times_played and song.times_played > 10:
         why_this_song.append("Popular choice for similar moods")

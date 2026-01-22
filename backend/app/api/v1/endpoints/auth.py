@@ -1,41 +1,43 @@
 """Authentication endpoints."""
 
 from datetime import datetime
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.db.base import get_db
-from app.models.user import User
-from app.schemas.user import UserCreate, UserResponse, UserLogin, Token, UserUpdate
+from app.config import settings
 from app.core.security import (
-    get_password_hash,
-    verify_password,
     create_access_token,
     create_refresh_token,
     decode_token,
-    get_current_user_required
+    get_current_user_required,
+    get_password_hash,
+    verify_password,
 )
-from app.config import settings
+from app.db.base import get_db
+from app.models.user import User
+from app.schemas.user import Token, UserCreate, UserLogin, UserResponse, UserUpdate
 
 router = APIRouter()
 
 
-@router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED
+)
 async def register(user_data: UserCreate, db: Session = Depends(get_db)):
     """Register a new user."""
     # Check if email already exists
     existing_user = db.query(User).filter(User.email == user_data.email).first()
     if existing_user:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already registered"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered"
         )
 
     # Create new user
     user = User(
         email=user_data.email,
         hashed_password=get_password_hash(user_data.password),
-        display_name=user_data.display_name
+        display_name=user_data.display_name,
     )
     db.add(user)
     db.commit()
@@ -58,8 +60,7 @@ async def login(credentials: UserLogin, db: Session = Depends(get_db)):
 
     if not user.is_active:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="User account is disabled"
+            status_code=status.HTTP_403_FORBIDDEN, detail="User account is disabled"
         )
 
     # Update last login
@@ -74,7 +75,7 @@ async def login(credentials: UserLogin, db: Session = Depends(get_db)):
     return Token(
         access_token=access_token,
         refresh_token=refresh_token,
-        expires_in=settings.access_token_expire_minutes * 60
+        expires_in=settings.access_token_expire_minutes * 60,
     )
 
 
@@ -94,7 +95,7 @@ async def refresh_token(refresh_token: str, db: Session = Depends(get_db)):
     if not user or not user.is_active:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User not found or inactive"
+            detail="User not found or inactive",
         )
 
     # Create new tokens
@@ -105,7 +106,7 @@ async def refresh_token(refresh_token: str, db: Session = Depends(get_db)):
     return Token(
         access_token=new_access_token,
         refresh_token=new_refresh_token,
-        expires_in=settings.access_token_expire_minutes * 60
+        expires_in=settings.access_token_expire_minutes * 60,
     )
 
 
@@ -119,7 +120,7 @@ async def get_me(current_user: User = Depends(get_current_user_required)):
 async def update_me(
     user_update: UserUpdate,
     current_user: User = Depends(get_current_user_required),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Update current user profile."""
     if user_update.display_name is not None:
@@ -137,7 +138,7 @@ async def update_me(
 @router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_me(
     current_user: User = Depends(get_current_user_required),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Delete current user account."""
     db.delete(current_user)

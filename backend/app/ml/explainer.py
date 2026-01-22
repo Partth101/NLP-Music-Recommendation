@@ -7,6 +7,7 @@ for emotion classification results.
 
 import logging
 from typing import Optional
+
 import numpy as np
 
 logger = logging.getLogger(__name__)
@@ -14,6 +15,7 @@ logger = logging.getLogger(__name__)
 # Optional SHAP import - gracefully handle if not installed
 try:
     import shap
+
     SHAP_AVAILABLE = True
 except ImportError:
     SHAP_AVAILABLE = False
@@ -63,7 +65,7 @@ class EmotionExplainer:
             self._explainer = shap.Explainer(
                 predict_fn,
                 masker=shap.maskers.Text(self.model_manager._tokenizer),
-                output_names=self.model_manager.EMOTIONS
+                output_names=self.model_manager.EMOTIONS,
             )
             self._initialized = True
             logger.info("SHAP explainer initialized successfully")
@@ -102,31 +104,27 @@ class EmotionExplainer:
             prediction = self.model_manager.predict(text)
 
             # Extract word importance
-            word_importance = self._extract_word_importance(shap_values, text, target_emotion)
+            word_importance = self._extract_word_importance(
+                shap_values, text, target_emotion
+            )
 
             # Generate natural language explanation
             explanation = self._generate_explanation(
-                text,
-                prediction,
-                word_importance,
-                target_emotion
+                text, prediction, word_importance, target_emotion
             )
 
             # Get top contributing words
             top_words = sorted(
-                word_importance.items(),
-                key=lambda x: abs(x[1]),
-                reverse=True
+                word_importance.items(), key=lambda x: abs(x[1]), reverse=True
             )[:5]
 
             return {
                 "word_importance": word_importance,
                 "explanation": explanation,
                 "top_contributing_words": [
-                    {"word": w, "importance": round(i, 3)}
-                    for w, i in top_words
+                    {"word": w, "importance": round(i, 3)} for w, i in top_words
                 ],
-                "shap_available": True
+                "shap_available": True,
             }
 
         except Exception as e:
@@ -134,10 +132,7 @@ class EmotionExplainer:
             return self._generate_basic_explanation(text, target_emotion)
 
     def _extract_word_importance(
-        self,
-        shap_values,
-        text: str,
-        target_emotion: Optional[str] = None
+        self, shap_values, text: str, target_emotion: Optional[str] = None
     ) -> dict[str, float]:
         """Extract word-level importance from SHAP values."""
         words = text.split()
@@ -154,7 +149,7 @@ class EmotionExplainer:
             values = shap_values.values[0][:, emotion_idx]
 
             # Map SHAP values to words
-            for i, word in enumerate(words[:len(values)]):
+            for i, word in enumerate(words[: len(values)]):
                 if i < len(values):
                     importance[word] = float(values[i])
 
@@ -168,26 +163,26 @@ class EmotionExplainer:
         text: str,
         prediction: dict,
         word_importance: dict,
-        target_emotion: Optional[str]
+        target_emotion: Optional[str],
     ) -> str:
         """Generate natural language explanation."""
         primary = prediction["primary_emotion"]
         confidence = prediction["primary_confidence"]
 
         # Get top positive and negative words
-        sorted_words = sorted(
-            word_importance.items(),
-            key=lambda x: x[1],
-            reverse=True
-        )
+        sorted_words = sorted(word_importance.items(), key=lambda x: x[1], reverse=True)
         positive_words = [w for w, s in sorted_words if s > 0][:3]
 
         # Build explanation
-        explanation = f"Your text expresses **{primary}** ({int(confidence * 100)}% confidence). "
+        explanation = (
+            f"Your text expresses **{primary}** ({int(confidence * 100)}% confidence). "
+        )
 
         if positive_words:
             words_str = ", ".join(f"'{w}'" for w in positive_words)
-            explanation += f"Key words contributing to this emotion include {words_str}. "
+            explanation += (
+                f"Key words contributing to this emotion include {words_str}. "
+            )
 
         if prediction["secondary_emotions"]:
             secondary = prediction["secondary_emotions"][:2]
@@ -195,9 +190,13 @@ class EmotionExplainer:
 
         return explanation
 
-    def _generate_basic_explanation(self, text: str, target_emotion: Optional[str]) -> dict:
+    def _generate_basic_explanation(
+        self, text: str, target_emotion: Optional[str]
+    ) -> dict:
         """Generate basic explanation without SHAP."""
-        prediction = self.model_manager.predict(text) if self.model_manager.is_loaded() else None
+        prediction = (
+            self.model_manager.predict(text) if self.model_manager.is_loaded() else None
+        )
 
         if prediction:
             explanation = (
@@ -213,7 +212,7 @@ class EmotionExplainer:
             "word_importance": {},
             "explanation": explanation,
             "top_contributing_words": [],
-            "shap_available": False
+            "shap_available": False,
         }
 
 

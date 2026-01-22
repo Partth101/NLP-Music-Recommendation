@@ -1,18 +1,18 @@
 """MoodTune AI - FastAPI Application Entry Point."""
 
+import logging
 from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-import logging
 
-from app.config import settings
 from app.api.v1.router import api_router
+from app.config import settings
 from app.ml.model_manager import ModelManager
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -74,7 +74,7 @@ async def root():
         "name": settings.app_name,
         "version": settings.app_version,
         "docs": "/docs",
-        "health": "/health"
+        "health": "/health",
     }
 
 
@@ -85,5 +85,5 @@ async def health_check():
     return {
         "status": "healthy",
         "model_loaded": model_manager.is_loaded(),
-        "model_version": settings.model_version
+        "model_version": settings.model_version,
     }
