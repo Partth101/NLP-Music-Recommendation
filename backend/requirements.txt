@@ -1,0 +1,53 @@
+# MoodTune AI Backend Dependencies
+
+# Web Framework
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+python-multipart==0.0.6
+pydantic==2.5.3
+pydantic-settings==2.1.0
+
+# Database
+sqlalchemy==2.0.25
+psycopg2-binary==2.9.9
+alembic==1.13.1
+
+# Authentication
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+
+# ML/NLP
+torch==2.1.2
+transformers==4.36.2
+tokenizers==0.15.0
+numpy==1.26.3
+pandas==2.1.4
+
+# Explainability (optional)
+shap==0.44.1
+
+# Caching
+redis==5.0.1
+
+# HTTP
+httpx==0.26.0
+requests==2.31.0
+
+# Spotify
+spotipy==2.23.0
+
+# Utilities
+python-dotenv==1.0.0
+tqdm==4.66.1
+
+# Testing
+pytest==7.4.4
+pytest-asyncio==0.23.3
+pytest-cov==4.1.0
+httpx==0.26.0
+
+# Code Quality
+black==23.12.1
+isort==5.13.2
+flake8==7.0.0
+mypy==1.8.0
