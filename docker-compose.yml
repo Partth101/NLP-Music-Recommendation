@@ -23,7 +23,7 @@ services:
         condition: service_started
     volumes:
       - ./backend/app/ml/savedmodel:/app/app/ml/savedmodel
-      - ./EmotionBasedMusicRecommender/data:/app/data:ro
+      - ./backend/data:/app/data:ro
     networks:
       - moodtune-network
     restart: unless-stopped

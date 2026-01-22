@@ -99,9 +99,9 @@ def init_database():
     try:
         # Find CSV file
         possible_paths = [
-            "../EmotionBasedMusicRecommender/data/processed_songs.csv",
-            "../../EmotionBasedMusicRecommender/data/processed_songs.csv",
-            "../data/processed_songs.csv",
+            "/app/data/processed_songs.csv",  # Docker container path
+            "./data/processed_songs.csv",     # Local backend/data path
+            "../data/processed_songs.csv",    # Relative path
         ]
 
         csv_path = None
