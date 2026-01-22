@@ -1,10 +1,8 @@
 """AI-powered insights endpoints."""
 
 from datetime import datetime, timedelta
-from typing import Optional
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
-from sqlalchemy import func
 from collections import Counter, defaultdict
 
 from app.db.base import get_db

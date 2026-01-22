@@ -1,10 +1,8 @@
 """History and statistics endpoints."""
 
 from datetime import datetime, timedelta
-from typing import Optional
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
-from sqlalchemy import func, desc
 from collections import Counter
 
 from app.db.base import get_db

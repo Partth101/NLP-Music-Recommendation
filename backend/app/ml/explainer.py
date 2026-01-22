@@ -58,14 +58,8 @@ class EmotionExplainer:
                     results.append(list(prediction["emotions"].values()))
                 return np.array(results)
 
-            # Initialize SHAP explainer with a small reference dataset
+            # Initialize SHAP explainer
             # Using Partition explainer for text classification
-            reference_texts = [
-                "I am feeling okay.",
-                "This is a neutral statement.",
-                "Nothing special happening today."
-            ]
-
             self._explainer = shap.Explainer(
                 predict_fn,
                 masker=shap.maskers.Text(self.model_manager._tokenizer),
@@ -187,7 +181,6 @@ class EmotionExplainer:
             reverse=True
         )
         positive_words = [w for w, s in sorted_words if s > 0][:3]
-        negative_words = [w for w, s in sorted_words if s < 0][:2]
 
         # Build explanation
         explanation = f"Your text expresses **{primary}** ({int(confidence * 100)}% confidence). "

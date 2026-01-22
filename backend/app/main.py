@@ -23,7 +23,7 @@ async def lifespan(app: FastAPI):
     # Startup: Load ML model
     logger.info("Starting MoodTune AI...")
     try:
-        model_manager = ModelManager.get_instance()
+        ModelManager.get_instance()
         logger.info(f"ML Model loaded successfully: {settings.model_version}")
     except Exception as e:
         logger.warning(f"ML Model not loaded (may need training): {e}")

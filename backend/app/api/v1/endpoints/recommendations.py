@@ -282,13 +282,16 @@ def _find_best_matching_song(
         weighted_score = sum(emotion_scores.get(e, 0) for e in matched)
 
         # Prefer songs with more matches, then by weighted score, then by least played
-        if match_count > len(best_matched_emotions) or (
+        is_better_match = match_count > len(best_matched_emotions)
+        is_same_count_higher_score = (
             match_count == len(best_matched_emotions) and weighted_score > best_score
-        ) or (
-            match_count == len(best_matched_emotions) and
-            weighted_score == best_score and
-            (best_song is None or (song.times_played or 0) < (best_song.times_played or 0))
-        ):
+        )
+        is_same_score_less_played = (
+            match_count == len(best_matched_emotions)
+            and weighted_score == best_score
+            and (best_song is None or (song.times_played or 0) < (best_song.times_played or 0))
+        )
+        if is_better_match or is_same_count_higher_score or is_same_score_less_played:
             best_song = song
             best_score = weighted_score
             best_matched_emotions = matched
