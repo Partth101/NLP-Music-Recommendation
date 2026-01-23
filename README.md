@@ -328,10 +328,6 @@ MIT License - see [LICENSE](LICENSE) for details.
 
 ## Author
 
-**Parth Ghayal** - AI/ML Engineer & Full-Stack Developer
+**Parth Ghayal**
 
 ---
-
-<p align="center">
-  <sub>Built for UK Global Talent Visa Portfolio</sub>
-</p>
