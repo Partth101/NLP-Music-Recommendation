@@ -60,10 +60,10 @@ jobs:
       - name: Run linting
         run: |
           cd backend
-          pip install flake8 black isort
+          pip install flake8 'black==23.12.1' 'isort==5.13.2'
           flake8 app --max-line-length=120 --ignore=E501,W503
           black --check app
-          isort --check-only app
+          isort --profile black --check-only app
 
       - name: Run tests with coverage
         env:

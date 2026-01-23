@@ -91,7 +91,9 @@ async def get_mood_patterns(
             else (
                 "afternoon"
                 if 12 <= hour < 17
-                else "evening" if 17 <= hour < 21 else "night"
+                else "evening"
+                if 17 <= hour < 21
+                else "night"
             )
         )
         hour_emotions[period].append(analysis.primary_emotion)
@@ -266,9 +268,9 @@ async def get_music_taste_profile(
     # Generate description
     if top_artists:
         fav_artist = top_artists[0][0]
-        profile["description"] = (
-            f"Based on {len(recommendations)} recommendations, you gravitate towards artists like **{fav_artist}**. "
-        )
+        profile[
+            "description"
+        ] = f"Based on {len(recommendations)} recommendations, you gravitate towards artists like **{fav_artist}**. "
     else:
         profile["description"] = ""
 
