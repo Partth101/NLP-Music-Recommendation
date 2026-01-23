@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from app.config import settings
 from app.core.security import get_current_user_optional
 from app.db.base import get_db
+from app.ml.explainer import get_explainer
 from app.ml.model_manager import ModelManager
 from app.models.emotion_analysis import EmotionAnalysis
 from app.models.user import User
@@ -58,18 +59,18 @@ async def analyze_emotions(
 
         processing_time_ms = int((time.time() - start_time) * 1000)
 
-        # Generate explanation if requested
+        # Generate explanation and word importance if requested
         explanation = None
         word_importance = None
         if request.include_explanation:
-            explanation = _generate_explanation(
-                prediction["primary_emotion"],
-                prediction["primary_confidence"],
-                prediction["secondary_emotions"],
-                prediction["confidence_level"],
+            explainer = get_explainer(model_manager)
+            explainer_result = explainer.explain(
+                request.text, target_emotion=prediction["primary_emotion"]
             )
-            # TODO: Add SHAP word importance when explainer is implemented
-            # word_importance = explainer.get_word_importance(request.text)
+            explanation = explainer_result.get("explanation")
+            word_importance = explainer_result.get("word_importance")
+            if not word_importance:
+                word_importance = None
 
         # Save to database if user is authenticated
         analysis_id = None

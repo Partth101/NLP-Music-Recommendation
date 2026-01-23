@@ -9,6 +9,7 @@ import logging
 import os
 from typing import Optional
 
+import numpy as np
 import torch
 from transformers import BertForSequenceClassification, BertTokenizer
 
@@ -185,8 +186,6 @@ class ModelManager:
             confidence_level = "low"
 
         # Calculate emotional complexity (entropy-based)
-        import numpy as np
-
         scores_array = np.array(scores)
         scores_normalized = scores_array / (scores_array.sum() + 1e-10)
         entropy = -np.sum(scores_normalized * np.log(scores_normalized + 1e-10))

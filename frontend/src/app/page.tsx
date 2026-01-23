@@ -104,7 +104,7 @@ export default function LandingPage() {
               <Button variant="ghost">Try Now</Button>
             </Link>
             <a
-              href="https://github.com/your-username/moodtune-ai"
+              href="https://github.com/parthmghayal/NLP-Music-Recommendation"
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -316,7 +316,7 @@ export default function LandingPage() {
           </p>
           <div className="flex items-center gap-4">
             <a
-              href="https://github.com/your-username/moodtune-ai"
+              href="https://github.com/parthmghayal/NLP-Music-Recommendation"
               target="_blank"
               rel="noopener noreferrer"
               className="text-muted-foreground hover:text-foreground transition-colors"

@@ -51,11 +51,75 @@ export interface UserCredentials {
   password: string;
 }
 
+export interface User {
+  id: string;
+  email: string;
+  display_name?: string;
+  is_active: boolean;
+  created_at: string;
+}
+
 export interface AuthToken {
   access_token: string;
   refresh_token: string;
   token_type: string;
   expires_in: number;
+}
+
+export interface RegisterResponse {
+  id: string;
+  email: string;
+  display_name?: string;
+  message: string;
+}
+
+export interface RecommendationHistoryItem {
+  id: string;
+  song: Song;
+  match_score: number;
+  matched_emotions: string[];
+  created_at: string;
+  feedback_rating?: number;
+}
+
+export interface RecommendationHistoryResponse {
+  recommendations: RecommendationHistoryItem[];
+  total: number;
+  page: number;
+  per_page: number;
+}
+
+export interface MoodInsight {
+  type: string;
+  title: string;
+  description: string;
+  data: Record<string, unknown>;
+}
+
+export interface MoodPatternsResponse {
+  has_data: boolean;
+  message?: string;
+  total_analyses?: number;
+  period_days?: number;
+  insights: MoodInsight[];
+}
+
+export interface MusicTasteProfile {
+  has_data: boolean;
+  message?: string;
+  profile?: {
+    top_artists: Array<{ artist: string; count: number }>;
+    music_emotion_preferences: Array<{ emotion: string; count: number }>;
+    preferred_emotions: Array<{ emotion: string; count: number }>;
+    total_recommendations: number;
+    average_match_score: number;
+    description: string;
+  };
+}
+
+export interface SongStats {
+  total_songs: number;
+  songs_by_emotion: Record<string, number>;
 }
 
 class ApiClient {
@@ -103,7 +167,7 @@ class ApiClient {
     email: string,
     password: string,
     displayName?: string
-  ): Promise<any> {
+  ): Promise<RegisterResponse> {
     return this.request("/api/v1/auth/register", {
       method: "POST",
       body: JSON.stringify({ email, password, display_name: displayName }),
@@ -132,7 +196,7 @@ class ApiClient {
     }
   }
 
-  async getMe(): Promise<any> {
+  async getMe(): Promise<User> {
     return this.request("/api/v1/auth/me");
   }
 
@@ -195,23 +259,18 @@ class ApiClient {
   async getHistory(
     page: number = 1,
     perPage: number = 10
-  ): Promise<{
-    recommendations: any[];
-    total: number;
-    page: number;
-    per_page: number;
-  }> {
+  ): Promise<RecommendationHistoryResponse> {
     return this.request(
       `/api/v1/recommendations/history?page=${page}&per_page=${perPage}`
     );
   }
 
   // Insights
-  async getMoodPatterns(days: number = 30): Promise<any> {
+  async getMoodPatterns(days: number = 30): Promise<MoodPatternsResponse> {
     return this.request(`/api/v1/insights/mood-patterns?days=${days}`);
   }
 
-  async getMusicTasteProfile(): Promise<any> {
+  async getMusicTasteProfile(): Promise<MusicTasteProfile> {
     return this.request("/api/v1/insights/music-taste");
   }
 
@@ -220,12 +279,12 @@ class ApiClient {
     return this.request("/api/v1/songs/random");
   }
 
-  async getSongStats(): Promise<any> {
+  async getSongStats(): Promise<SongStats> {
     return this.request("/api/v1/songs/stats");
   }
 
   // History Stats
-  async getHistoryStats(days: number = 30): Promise<any> {
+  async getHistoryStats(days: number = 30): Promise<MoodPatternsResponse> {
     return this.request(`/api/v1/history/stats?days=${days}`);
   }
 }

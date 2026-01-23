@@ -1,63 +1,170 @@
-# MoodTune AI - Emotion-Aware Music Recommendation System
+# MoodTune AI
 
-[![CI/CD Pipeline](https://github.com/YOUR_USERNAME/moodtune-ai/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR_USERNAME/moodtune-ai/actions/workflows/ci.yml)
-[![codecov](https://codecov.io/gh/YOUR_USERNAME/moodtune-ai/branch/main/graph/badge.svg)](https://codecov.io/gh/YOUR_USERNAME/moodtune-ai)
+[![CI/CD Pipeline](https://github.com/parthmghayal/NLP-Music-Recommendation/actions/workflows/ci.yml/badge.svg)](https://github.com/parthmghayal/NLP-Music-Recommendation/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/downloads/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue.svg)](https://www.typescriptlang.org/)
+[![Python 3.11](https://img.shields.io/badge/python-3.11-3776AB?logo=python&logoColor=white)](https://www.python.org/downloads/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.3-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![PyTorch](https://img.shields.io/badge/PyTorch-2.1-EE4C2C?logo=pytorch&logoColor=white)](https://pytorch.org/)
 
-> **An AI-powered music recommendation system that understands your emotions through natural language processing and recommends the perfect soundtrack for your mood.**
-
-[Live Demo](https://moodtune-ai.vercel.app) | [API Documentation](https://api.moodtune-ai.com/docs) | [Video Demo](#demo-video)
-
----
-
-## Highlights
-
-- **BERT-Based Emotion Detection** - Fine-tuned transformer model detecting 17 nuanced emotions with 84.7% accuracy
-- **Explainable AI** - SHAP-powered explanations showing why each song was recommended
-- **Real-Time Analysis** - Sub-100ms inference time for instant recommendations
-- **Voice Input** - Speak your mood using Web Speech API
-- **Personalization Engine** - Learns your preferences over time
-- **Production-Ready** - Full CI/CD pipeline with Docker, PostgreSQL, and Redis
+An emotion-aware music recommendation system that uses BERT-based natural language processing to detect nuanced emotions from text and recommend contextually appropriate music. The system performs **multi-label classification** across 17 emotion categories with **SHAP-powered explainability**.
 
 ---
 
-## Table of Contents
+## AI Architecture
 
-- [Features](#features)
-- [Tech Stack](#tech-stack)
-- [Architecture](#architecture)
-- [Getting Started](#getting-started)
-- [API Reference](#api-reference)
-- [Model Details](#model-details)
-- [Screenshots](#screenshots)
-- [Performance](#performance)
-- [Contributing](#contributing)
-- [License](#license)
+### Model Overview
 
----
+| Component | Specification |
+|-----------|---------------|
+| **Base Model** | `bert-base-uncased` (110M parameters, 12 layers, 768 hidden units) |
+| **Task** | Multi-label emotion classification |
+| **Output Classes** | 17 emotions with independent sigmoid activations |
+| **Loss Function** | Binary Cross-Entropy with Logits (BCEWithLogitsLoss) |
+| **Inference** | Single-model serving via singleton pattern for low-latency |
 
-## Features
-
-### Core Features
-
-| Feature | Description |
-|---------|-------------|
-| **Multi-Label Emotion Detection** | Detects 17 emotions simultaneously from text input |
-| **Confidence Scores** | Returns probability scores for each emotion (0-100%) |
-| **Song Matching Algorithm** | Matches user emotions to song emotion profiles |
-| **AI Explanations** | Natural language explanations for recommendations |
-| **Voice Input** | Browser-based speech recognition |
-| **User History** | Track past recommendations and mood patterns |
-| **AI Insights** | Mood trends, patterns, and music taste analysis |
-
-### Supported Emotions
+### NLP Pipeline
 
 ```
-Happiness • Contentment • Confidence • Neutral • Sadness
-Anger • Fear • Surprise • Disgust • Love • Excitement
-Anticipation • Nostalgia • Confusion • Frustration • Longing • Optimism
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           EMOTION ANALYSIS PIPELINE                          │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│   Input Text                                                                 │
+│       │                                                                      │
+│       ▼                                                                      │
+│   ┌─────────────────────────────────────────────────────────────────────┐   │
+│   │  TOKENIZATION (BertTokenizer)                                        │   │
+│   │  • WordPiece tokenization                                            │   │
+│   │  • Max sequence length: 512 tokens                                   │   │
+│   │  • Special tokens: [CLS], [SEP], [PAD]                              │   │
+│   │  • Attention mask generation                                         │   │
+│   └─────────────────────────────────────────────────────────────────────┘   │
+│       │                                                                      │
+│       ▼                                                                      │
+│   ┌─────────────────────────────────────────────────────────────────────┐   │
+│   │  BERT ENCODER (12 Transformer Layers)                                │   │
+│   │  • Self-attention mechanism                                          │   │
+│   │  • Contextual embeddings (768-dim)                                   │   │
+│   │  • [CLS] token aggregates sequence representation                    │   │
+│   └─────────────────────────────────────────────────────────────────────┘   │
+│       │                                                                      │
+│       ▼                                                                      │
+│   ┌─────────────────────────────────────────────────────────────────────┐   │
+│   │  CLASSIFICATION HEAD                                                 │   │
+│   │  • Linear layer: 768 → 17 (emotion logits)                          │   │
+│   │  • Independent sigmoid activation per emotion                        │   │
+│   │  • Multi-label output (emotions can co-occur)                       │   │
+│   └─────────────────────────────────────────────────────────────────────┘   │
+│       │                                                                      │
+│       ▼                                                                      │
+│   ┌─────────────────────────────────────────────────────────────────────┐   │
+│   │  POST-PROCESSING                                                     │   │
+│   │  • Confidence thresholding (default: 0.5)                           │   │
+│   │  • Primary/secondary emotion ranking                                 │   │
+│   │  • Emotional complexity calculation (entropy-based)                  │   │
+│   └─────────────────────────────────────────────────────────────────────┘   │
+│       │                                                                      │
+│       ▼                                                                      │
+│   Emotion Scores + Explanations                                             │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Emotional Complexity Metric
+
+A novel metric that quantifies how diverse or focused the emotional expression is, calculated using normalized entropy:
+
+```
+Emotional Complexity = H(p) / H_max
+
+Where:
+  H(p) = -Σ p_i × log(p_i)     (Shannon entropy of emotion distribution)
+  H_max = log(17)               (Maximum entropy for 17 emotions)
+  p_i = σ(logit_i) / Σσ(logit_j)  (Normalized sigmoid scores)
+```
+
+- **Complexity ≈ 0**: Single dominant emotion (focused emotional state)
+- **Complexity ≈ 1**: Uniform distribution across emotions (complex/mixed feelings)
+
+### Supported Emotions (17 Classes)
+
+```
+Positive          Negative          Neutral/Complex
+─────────         ─────────         ───────────────
+Happiness         Sadness           Neutral
+Contentment       Anger             Confusion
+Confidence        Fear              Anticipation
+Love              Disgust           Nostalgia
+Excitement        Frustration       Longing
+Optimism          Surprise
+```
+
+### Explainability (SHAP Integration)
+
+The system uses **SHAP (SHapley Additive exPlanations)** to provide word-level importance scores:
+
+```python
+# Example output structure
+{
+    "word_importance": {
+        "promoted": 0.234,
+        "excited": 0.189,
+        "I": 0.012,
+        ...
+    },
+    "top_contributing_words": [
+        {"word": "promoted", "importance": 0.234},
+        {"word": "excited", "importance": 0.189}
+    ],
+    "explanation": "Your text expresses **Happiness** (92% confidence).
+                    Key words contributing to this emotion include 'promoted', 'excited'."
+}
+```
+
+### Training Methodology
+
+| Aspect | Details |
+|--------|---------|
+| **Dataset** | Friends TV series dialogues (~10,000 samples) |
+| **Annotation** | GPT-3.5 assisted multi-label emotion tagging |
+| **Train/Val/Test Split** | 80% / 10% / 10% |
+| **Optimizer** | AdamW (lr=5e-5, weight_decay=0.01) |
+| **Batch Size** | 16 |
+| **Epochs** | 4 (with early stopping) |
+| **Hardware** | NVIDIA GPU with mixed precision (FP16) |
+
+---
+
+## System Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                              CLIENT LAYER                                    │
+│                     Next.js 14 + TypeScript + Tailwind CSS                  │
+│              React Server Components • Framer Motion Animations              │
+└─────────────────────────────────────┬───────────────────────────────────────┘
+                                      │ HTTPS/REST
+                                      ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                              API LAYER                                       │
+│                    FastAPI + Pydantic V2 + JWT Auth                         │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  /api/v1/emotions/analyze     POST   Emotion analysis with SHAP             │
+│  /api/v1/recommendations      POST   Get music recommendation               │
+│  /api/v1/insights/patterns    GET    AI-generated mood insights             │
+│  /api/v1/auth/*               *      Authentication endpoints               │
+└─────────────────────────────────────┬───────────────────────────────────────┘
+                                      │
+            ┌─────────────────────────┼─────────────────────────┐
+            ▼                         ▼                         ▼
+┌───────────────────┐    ┌───────────────────┐    ┌───────────────────┐
+│    PostgreSQL     │    │   ML Service      │    │      Redis        │
+│    ───────────    │    │   ──────────      │    │      ─────        │
+│  • User data      │    │  • BERT Model     │    │  • Session cache  │
+│  • Emotions log   │    │  • SHAP Explainer │    │  • Rate limiting  │
+│  • Recommendations│    │  • Singleton mgr  │    │  • Model cache    │
+│  • Feedback       │    │  • GPU/CPU auto   │    │                   │
+└───────────────────┘    └───────────────────┘    └───────────────────┘
 ```
 
 ---
@@ -65,178 +172,79 @@ Anticipation • Nostalgia • Confusion • Frustration • Longing • Optimis
 ## Tech Stack
 
 ### Backend
-| Technology | Purpose |
-|------------|---------|
-| ![Python](https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white) | Core language |
-| ![FastAPI](https://img.shields.io/badge/FastAPI-0.109-009688?logo=fastapi&logoColor=white) | REST API framework |
-| ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-336791?logo=postgresql&logoColor=white) | Primary database |
-| ![Redis](https://img.shields.io/badge/Redis-7-DC382D?logo=redis&logoColor=white) | Caching layer |
-| ![PyTorch](https://img.shields.io/badge/PyTorch-2.1-EE4C2C?logo=pytorch&logoColor=white) | Deep learning |
-| ![Transformers](https://img.shields.io/badge/Transformers-4.36-FFD21E?logo=huggingface&logoColor=black) | BERT models |
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| Python | 3.11 | Core language |
+| FastAPI | 0.109 | Async REST API framework |
+| PyTorch | 2.1 | Deep learning framework |
+| Transformers | 4.36 | BERT model loading |
+| SHAP | 0.44 | Model explainability |
+| SQLAlchemy | 2.0 | ORM |
+| PostgreSQL | 15 | Primary database |
+| Redis | 7 | Caching layer |
 
 ### Frontend
-| Technology | Purpose |
-|------------|---------|
-| ![Next.js](https://img.shields.io/badge/Next.js-14-000000?logo=next.js&logoColor=white) | React framework |
-| ![TypeScript](https://img.shields.io/badge/TypeScript-5.3-3178C6?logo=typescript&logoColor=white) | Type safety |
-| ![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4-06B6D4?logo=tailwindcss&logoColor=white) | Styling |
-| ![Recharts](https://img.shields.io/badge/Recharts-2.10-8884d8) | Data visualization |
-| ![Framer Motion](https://img.shields.io/badge/Framer_Motion-10-0055FF?logo=framer&logoColor=white) | Animations |
-
-### AI/ML
-| Technology | Purpose |
-|------------|---------|
-| ![BERT](https://img.shields.io/badge/BERT-base--uncased-orange) | Emotion classification |
-| ![SHAP](https://img.shields.io/badge/SHAP-0.44-green) | Model explainability |
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| Next.js | 14 | React framework (App Router) |
+| TypeScript | 5.3 | Type safety |
+| Tailwind CSS | 3.4 | Utility-first styling |
+| Framer Motion | 10 | Animations |
+| Zustand | 4.4 | State management |
+| Recharts | 2.10 | Data visualization |
 
 ### DevOps
 | Technology | Purpose |
 |------------|---------|
-| ![Docker](https://img.shields.io/badge/Docker-24-2496ED?logo=docker&logoColor=white) | Containerization |
-| ![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-CI/CD-2088FF?logo=github-actions&logoColor=white) | Automation |
-| ![Railway](https://img.shields.io/badge/Railway-Deploy-0B0D0E?logo=railway&logoColor=white) | Backend hosting |
-| ![Vercel](https://img.shields.io/badge/Vercel-Deploy-000000?logo=vercel&logoColor=white) | Frontend hosting |
+| Docker | Containerization |
+| GitHub Actions | CI/CD pipeline |
+| Docker Compose | Local orchestration |
 
 ---
 
-## Architecture
-
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                         CLIENT (Browser)                                 │
-│                    Next.js 14 + TypeScript + Tailwind                   │
-└────────────────────────────────┬────────────────────────────────────────┘
-                                 │ HTTPS
-                                 ▼
-┌─────────────────────────────────────────────────────────────────────────┐
-│                           VERCEL CDN                                     │
-│                     Edge Functions + Static Assets                       │
-└────────────────────────────────┬────────────────────────────────────────┘
-                                 │
-                                 ▼
-┌─────────────────────────────────────────────────────────────────────────┐
-│                        FASTAPI BACKEND                                   │
-│              Async Python + Pydantic + JWT Auth                         │
-├─────────────────────────────────────────────────────────────────────────┤
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌─────────────┐ │
-│  │  PostgreSQL  │  │    Redis     │  │  ML Service  │  │  Spotify    │ │
-│  │   Database   │  │    Cache     │  │  BERT+SHAP   │  │    API      │ │
-│  └──────────────┘  └──────────────┘  └──────────────┘  └─────────────┘ │
-└─────────────────────────────────────────────────────────────────────────┘
-```
-
-### Data Flow
-
-```
-User Input → Tokenization → BERT Inference → Emotion Scores
-                                                    │
-                                                    ▼
-                                           Song Matching
-                                                    │
-                                                    ▼
-                               ┌────────────────────┴────────────────────┐
-                               │                                          │
-                               ▼                                          ▼
-                        AI Explanation                              Spotify Embed
-                               │                                          │
-                               └──────────────┬───────────────────────────┘
-                                              │
-                                              ▼
-                                     Response to User
-```
-
----
-
-## Getting Started
+## Quick Start
 
 ### Prerequisites
-
 - Python 3.11+
 - Node.js 20+
 - Docker & Docker Compose
-- PostgreSQL 15+
-- Redis 7+
 
-### Quick Start with Docker
+### Run with Docker
 
 ```bash
-# Clone the repository
-git clone https://github.com/YOUR_USERNAME/moodtune-ai.git
-cd moodtune-ai
+git clone https://github.com/parthmghayal/NLP-Music-Recommendation.git
+cd NLP-Music-Recommendation
 
-# Create environment file
 cp .env.example .env
-
-# Start all services
 docker-compose up -d
 
-# Access the application
 # Frontend: http://localhost:3000
-# Backend API: http://localhost:8000
+# Backend:  http://localhost:8000
 # API Docs: http://localhost:8000/docs
 ```
 
 ### Local Development
 
-#### Backend
-
+**Backend:**
 ```bash
 cd backend
-
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Install dependencies
+python -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
-
-# Set environment variables
-export DATABASE_URL=postgresql://postgres:postgres@localhost:5432/moodtune
-export REDIS_URL=redis://localhost:6379
-export JWT_SECRET_KEY=your-secret-key
-
-# Initialize database
-python -m app.db.init_db
-
-# Run development server
 uvicorn app.main:app --reload --port 8000
 ```
 
-#### Frontend
-
+**Frontend:**
 ```bash
 cd frontend
-
-# Install dependencies
 npm install
-
-# Set environment variables
-echo "NEXT_PUBLIC_API_URL=http://localhost:8000" > .env.local
-
-# Run development server
 npm run dev
 ```
 
 ---
 
-## API Reference
+## API Examples
 
-### Authentication
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/v1/auth/register` | POST | Register new user |
-| `/api/v1/auth/login` | POST | Login and get JWT tokens |
-| `/api/v1/auth/me` | GET | Get current user profile |
-
-### Emotion Analysis
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/v1/emotions/analyze` | POST | Analyze text for emotions |
-| `/api/v1/emotions/supported` | GET | List supported emotions |
-
-#### Example Request
+### Analyze Emotions
 
 ```bash
 curl -X POST "http://localhost:8000/api/v1/emotions/analyze" \
@@ -244,194 +252,86 @@ curl -X POST "http://localhost:8000/api/v1/emotions/analyze" \
   -d '{"text": "I just got promoted and I am so excited!", "include_explanation": true}'
 ```
 
-#### Example Response
-
+**Response:**
 ```json
 {
   "emotions": {
     "Happiness": 0.92,
     "Excitement": 0.87,
     "Confidence": 0.73,
-    "Optimism": 0.68,
-    "Anticipation": 0.45
+    "Optimism": 0.68
   },
   "primary_emotion": "Happiness",
   "primary_confidence": 0.92,
   "secondary_emotions": ["Excitement", "Confidence"],
-  "confidence_level": "high",
   "emotional_complexity": 0.58,
-  "explanation": "Your text expresses strong **Happiness** (92% confidence). Key contributing words include 'promoted' and 'excited'.",
+  "word_importance": {
+    "promoted": 0.234,
+    "excited": 0.189
+  },
+  "explanation": "Your text expresses **Happiness** (92% confidence). Key words: 'promoted', 'excited'.",
   "processing_time_ms": 47
 }
 ```
-
-### Recommendations
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/v1/recommendations` | POST | Get song recommendation |
-| `/api/v1/recommendations/{id}/feedback` | POST | Submit feedback |
-| `/api/v1/recommendations/history` | GET | Get recommendation history |
-
-### Insights
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/v1/insights/mood-patterns` | GET | AI-generated mood insights |
-| `/api/v1/insights/music-taste` | GET | Music taste profile |
-
-Full API documentation available at `/docs` (Swagger) or `/redoc` (ReDoc).
-
----
-
-## Model Details
-
-### Architecture
-
-- **Base Model**: `bert-base-uncased` (110M parameters)
-- **Task**: Multi-label classification
-- **Output**: 17 emotion probabilities
-- **Loss Function**: BCEWithLogitsLoss
-- **Optimizer**: AdamW (lr=5e-5)
-
-### Training Data
-
-- **Source**: Friends TV series dialogues (10 seasons)
-- **Size**: ~10,000 labeled dialogues
-- **Labeling**: GPT-3.5 assisted emotion annotation
-- **Preprocessing**: Text cleaning, duplicate removal, bracket filtering
-
-### Performance Metrics
-
-| Metric | Score |
-|--------|-------|
-| Accuracy | 84.7% |
-| F1 (Macro) | 81.2% |
-| F1 (Weighted) | 85.3% |
-| Inference Time | <50ms |
-
-### Emotion-wise Performance
-
-| Emotion | Precision | Recall | F1 |
-|---------|-----------|--------|-----|
-| Happiness | 0.89 | 0.93 | 0.91 |
-| Sadness | 0.85 | 0.88 | 0.86 |
-| Anger | 0.82 | 0.79 | 0.80 |
-| Love | 0.88 | 0.85 | 0.86 |
-| Excitement | 0.84 | 0.82 | 0.83 |
-
----
-
-## Screenshots
-
-### Landing Page
-*Modern, responsive landing page showcasing AI-powered features*
-
-### Emotion Analysis
-*Real-time emotion detection with confidence scores and radar visualization*
-
-### Recommendation Result
-*Song recommendation with Spotify embed and AI explanation*
-
-### Dashboard
-*Personal mood trends and music taste insights*
 
 ---
 
 ## Performance
 
-### Backend Benchmarks
-
 | Metric | Value |
 |--------|-------|
-| API Response Time (p50) | 89ms |
-| API Response Time (p95) | 142ms |
-| ML Inference Time | 47ms |
-| Requests/Second | 150+ |
-
-### Frontend Metrics
-
-| Metric | Score |
-|--------|-------|
-| Lighthouse Performance | 94 |
-| Lighthouse Accessibility | 98 |
-| Lighthouse Best Practices | 100 |
-| Lighthouse SEO | 100 |
-| First Contentful Paint | 0.8s |
-| Time to Interactive | 1.2s |
+| ML Inference Time | <50ms |
+| API Response (p50) | 89ms |
+| API Response (p95) | 142ms |
+| Model Accuracy | 84.7% |
+| F1 Score (Weighted) | 85.3% |
 
 ---
 
 ## Project Structure
 
 ```
-moodtune-ai/
-├── backend/                    # FastAPI backend
+NLP-Music-Recommendation/
+├── backend/
 │   ├── app/
-│   │   ├── api/v1/endpoints/  # API endpoints
-│   │   ├── core/              # Security, config
-│   │   ├── db/                # Database setup
-│   │   ├── ml/                # ML model manager
-│   │   ├── models/            # SQLAlchemy models
-│   │   ├── schemas/           # Pydantic schemas
-│   │   └── services/          # Business logic
-│   ├── tests/                 # Backend tests
-│   ├── Dockerfile
+│   │   ├── api/v1/endpoints/   # REST endpoints
+│   │   ├── ml/                 # BERT model & SHAP explainer
+│   │   ├── models/             # SQLAlchemy ORM models
+│   │   ├── schemas/            # Pydantic schemas
+│   │   └── services/           # Business logic
+│   ├── tests/
 │   └── requirements.txt
-├── frontend/                   # Next.js frontend
+├── frontend/
 │   ├── src/
-│   │   ├── app/               # App router pages
-│   │   ├── components/        # React components
-│   │   ├── hooks/             # Custom hooks
-│   │   ├── lib/               # Utilities
-│   │   └── stores/            # Zustand stores
-│   ├── Dockerfile
+│   │   ├── app/                # Next.js App Router
+│   │   ├── components/         # React components
+│   │   └── lib/                # Utilities
 │   └── package.json
-├── EmotionBasedMusicRecommender/  # Original prototype
-│   └── data/                  # Training data & songs
-├── .github/workflows/         # CI/CD pipelines
+├── docs/                       # Documentation
 ├── docker-compose.yml
 └── README.md
 ```
 
 ---
 
-## Contributing
+## References
 
-Contributions are welcome! Please read our Contributing Guide for details.
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+1. Devlin, J., et al. (2019). "BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding." *NAACL-HLT*.
+2. Lundberg, S. M., & Lee, S. I. (2017). "A Unified Approach to Interpreting Model Predictions." *NeurIPS*.
+3. Demszky, D., et al. (2020). "GoEmotions: A Dataset of Fine-Grained Emotions." *ACL*.
 
 ---
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
+MIT License - see [LICENSE](LICENSE) for details.
 
 ## Author
 
-**Parth** - AI/ML Engineer & Full-Stack Developer
-
----
-
-## Acknowledgments
-
-- BERT architecture by Google Research
-- Transformers library by Hugging Face
-- Friends TV show dialogue dataset
-- Spotify API for music integration
-- shadcn/ui for React components
+**Parth Ghayal** - AI/ML Engineer & Full-Stack Developer
 
 ---
 
 <p align="center">
-  Built with passion for the UK Global Talent Visa Portfolio
-  <br/>
-  <a href="https://moodtune-ai.vercel.app">Try the Live Demo</a>
+  <sub>Built for UK Global Talent Visa Portfolio</sub>
 </p>
