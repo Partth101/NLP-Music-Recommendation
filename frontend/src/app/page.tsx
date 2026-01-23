@@ -312,7 +312,7 @@ export default function LandingPage() {
             <span className="font-semibold">MoodTune AI</span>
           </div>
           <p className="text-sm text-muted-foreground">
-            Built for UK Global Talent Visa Portfolio
+            Emotion-aware music recommendations powered by BERT
           </p>
           <div className="flex items-center gap-4">
             <a

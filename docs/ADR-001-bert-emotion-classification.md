@@ -130,7 +130,7 @@ def predict(self, text: str, threshold: float = 0.5):
 ## Decision Makers
 
 - **Author**: Parth Ghayal
-- **Reviewed**: Self-review for portfolio project
+- **Date**: 2024
 
 ---
 
