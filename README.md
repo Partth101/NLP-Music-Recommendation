@@ -328,7 +328,7 @@ MIT License - see [LICENSE](LICENSE) for details.
 
 ## Author
 
-**Parth Ghayal** - AI/ML Engineer & Full-Stack Developer
+**Parth Ghayal**
 
 ---
 
