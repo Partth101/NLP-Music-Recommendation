@@ -331,7 +331,3 @@ MIT License - see [LICENSE](LICENSE) for details.
 **Parth Ghayal**
 
 ---
-
-<p align="center">
-  <sub>Built for UK Global Talent Visa Portfolio</sub>
-</p>
